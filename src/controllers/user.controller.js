@@ -6,23 +6,23 @@ import { ApiResponse } from "../utils/apiResponse.js";
 
 const registerUser = asyncHandler( async (req, res) =>{
   // get user details from frontend
-  const { fullName, email, userName, passWord } = req.body;
-  console.log("email:", email);
-  console.log("passWord:", passWord);
+  const { fullName, email, username, password } = req.body;
+  // console.log("email:", email);
+  // console.log("passWord:", passWord);
   // validation - not empty
 
   // if(fullName === ""){
   //     throw new ApiError(400, "Fullname is     required")
   // }
   if (
-    [fullName, email, passWord, userName].some((field) => field?.trim() === "")
+    [fullName, email, password, username].some((field) => field?.trim() === "")
   ) {
-    throw new ApiError(400, "All fields are    required");
+    throw new ApiError(400, "All fields are required");
   }
 
   // check if user already exsits: username, email
-  const existedUser = User.findOne({
-    $or: [{ userName }, { email }],
+  const existedUser = await User.findOne({
+    $or: [{ username }, { email }],
   });
   if (existedUser) {
     throw new ApiError(409, "User with email or username are already exists");
@@ -30,7 +30,15 @@ const registerUser = asyncHandler( async (req, res) =>{
 
   // check from images, check for avatar
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  // const coverImageLocalPath = req.files?.coverImage[0]?.path;
+   let coverImageLocalPath;
+   if (
+     req.files &&
+     Array.isArray(req.files.coverImage) &&
+     req.files.coverImage.length > 0
+   ) {
+     coverImageLocalPath = req.files.coverImage[0].path;
+   }
 
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is required");
@@ -51,8 +59,8 @@ const registerUser = asyncHandler( async (req, res) =>{
     avatar: avatar.url,
     coverImage: coverImage?.url || "",
     email,
-    passWord,
-    userName: userName.toLowerCase(),
+    password,
+    username: username.toLowerCase(),
   });
 
   // remove password and refresh token field from response
