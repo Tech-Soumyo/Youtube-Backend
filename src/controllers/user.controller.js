@@ -12,7 +12,7 @@ const registerUser = asyncHandler( async (req, res) =>{
   // validation - not empty
 
   // if(fullName === ""){
-  //     throw new ApiError(400, "Fullname is     required")
+  //     throw new ApiError(400, "Fullname is required")
   // }
   if (
     [fullName, email, password, username].some((field) => field?.trim() === "")
@@ -29,6 +29,7 @@ const registerUser = asyncHandler( async (req, res) =>{
   }
 
   // check from images, check for avatar
+  // console.log(req.files);
   const avatarLocalPath = req.files?.avatar[0]?.path;
   // const coverImageLocalPath = req.files?.coverImage[0]?.path;
    let coverImageLocalPath;
