@@ -4,6 +4,26 @@ import { User } from "../models/user.model.js";
 import { uploadCloudinary } from "../utils/cloudnary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 
+const generateAccessAndRefreashToken = async(userId) => 
+{
+  try {
+    const user = await User.findById(userId);
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken
+    await user.save({validateBeforeSave: false})
+
+    return {accessToken, refreshToken};
+
+
+  } catch (error) {
+    throw new ApiError(500, "Something went Wrong while generating refresh and access token")
+    
+  }
+}
+
+
 const registerUser = asyncHandler( async (req, res) =>{
   // get user details from frontend
   const { fullName, email, username, password } = req.body;
@@ -81,5 +101,59 @@ const registerUser = asyncHandler( async (req, res) =>{
   )
 })
 
-export {registerUser}
+const loginUser = asyncHandler(async(req, res)=>{
+  // req body -> data
+  const { email, username, password } = req.body;
+  if (!username || !email) {
+    throw new ApiError(400, "username or email is required");
+  }
+
+  // username or email
+  const user = await User.findOne({
+    $or: [{ username }, { email }],
+  });
+
+  // find user
+  if (!user) {
+    throw new ApiError(404, "User is not registered");
+  }
+
+  // password check
+  const isPasseordValid = await user.isPasswordcorrect(password);
+
+  if (!isPasseordValid) {
+    throw new ApiError(401, "Invalid User Credentials");
+  }
+
+  // access and refresh token
+  const { accessToken, refreshToken } = await generateAccessAndRefreashToken(
+    user._id
+  );
+
+  const loginInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+
+  // send cookie
+  const option = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, option)
+    .cookie("refreshToken", refreshToken, option)
+    .json(
+      new ApiResponse(
+        200, 
+        {
+        user: loginInUser, accessToken, refreshToken
+        }
+      )
+    );
+})
+
+export {registerUser,
+loginUser}
  
