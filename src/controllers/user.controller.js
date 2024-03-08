@@ -1,30 +1,27 @@
-import {asyncHandler} from "../utils/asyncHandlers.js";
+import { asyncHandler } from "../utils/asyncHandlers.js";
 import { ApiError } from "../utils/apierrors.js";
 import { User } from "../models/user.model.js";
 import { uploadCloudinary } from "../utils/cloudnary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-
-const generateAccessAndRefreashToken = async(userId) => 
-{
+const generateAccessAndRefreashToken = async (userId) => {
   try {
     const user = await User.findById(userId);
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
-    user.refreshToken = refreshToken
-    await user.save({validateBeforeSave: false})
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
 
-    return {accessToken, refreshToken};
-
-
+    return { accessToken, refreshToken };
   } catch (error) {
-    throw new ApiError(500, "Something went Wrong while generating refresh and access token")
-    
+    throw new ApiError(
+      500,
+      "Something went Wrong while generating refresh and access token"
+    );
   }
-}
+};
 
-
-const registerUser = asyncHandler( async (req, res) =>{
+const registerUser = asyncHandler(async (req, res) => {
   // get user details from frontend
   const { fullName, email, username, password } = req.body;
   // console.log("email:", email);
@@ -52,14 +49,14 @@ const registerUser = asyncHandler( async (req, res) =>{
   // console.log(req.files);
   const avatarLocalPath = req.files?.avatar[0]?.path;
   // const coverImageLocalPath = req.files?.coverImage[0]?.path;
-   let coverImageLocalPath;
-   if (
-     req.files &&
-     Array.isArray(req.files.coverImage) &&
-     req.files.coverImage.length > 0
-   ) {
-     coverImageLocalPath = req.files.coverImage[0].path;
-   }
+  let coverImageLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImageLocalPath = req.files.coverImage[0].path;
+  }
 
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is required");
@@ -96,12 +93,12 @@ const registerUser = asyncHandler( async (req, res) =>{
 
   // return res
 
-  return res.status(201).json(
-   new ApiResponse(200, createUser, "User registerd Successfully")
-  )
-})
+  return res
+    .status(201)
+    .json(new ApiResponse(200, createUser, "User registerd Successfully"));
+});
 
-const loginUser = asyncHandler(async(req, res)=>{
+const loginUser = asyncHandler(async (req, res) => {
   // req body -> data
   const { email, username, password } = req.body;
   if (!username || !email) {
@@ -135,7 +132,7 @@ const loginUser = asyncHandler(async(req, res)=>{
   );
 
   // send cookie
-  const option = {
+  const options = {
     httpOnly: true,
     secure: true,
   };
@@ -145,15 +142,37 @@ const loginUser = asyncHandler(async(req, res)=>{
     .cookie("accessToken", accessToken, option)
     .cookie("refreshToken", refreshToken, option)
     .json(
-      new ApiResponse(
-        200, 
-        {
-        user: loginInUser, accessToken, refreshToken
-        }
-      )
+      new ApiResponse(200, {
+        user: loginInUser,
+        accessToken,
+        refreshToken,
+      })
     );
-})
+});
 
-export {registerUser,
-loginUser}
- 
+const logoutUser = asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        refreshToken: undefined,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User logged Out"));
+});
+
+export { registerUser, loginUser, logoutUser };
