@@ -3,6 +3,7 @@ import {
   loginUser,
   logoutUser,
   registerUser,
+  refreshAccessToken,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -28,5 +29,7 @@ router.route("/login").post(loginUser);
 
 // sercure Routes
 router.route("/logout").post(verifyJWT, logoutUser);
+
+router.route("/refresh-Token").post(refreshAccessToken);
 
 export default router;
