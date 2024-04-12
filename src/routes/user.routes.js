@@ -46,7 +46,7 @@ router
   .route("/update-avatar")
   .patch(verifyJWT, upload.single("avatar"), updateUserAvatar);
 router
-  .route("/update-updateUserCoverImage")
+  .route("/update-CoverImage")
   .patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile);
 // when we use params , we have to use "/c/: {name}" for routing address
