@@ -1,4 +1,4 @@
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose";
 import { DB_NAME } from "../constants.js";
 
 // MONGODB_URI= "mongodb+srv://soumyotechdeep:r0ofCa4jc1oYxzTd@backendproject.0ujrrwb.mongodb.net"
